@@ -14,39 +14,48 @@
 #                                                         #
 ###########################################################
 
-echo "Informe o nome do server (Ex.: adler) :"
-read server
+if [[ $EUID -ne 0 ]]; then
 
-echo "Informe o caminho do site (Ex.: /var/www/adler) :"
-read path
+    echo "Você deve executar como root" 2>&1
+    exit 1
 
-echo "Criando configuração de VHost para o server"
+else
 
-echo "
-<VirtualHost *:80>
-    ServerAdmin webmaster@localhost
-    ServerName $server.dev
-    ServerAlias www.$server.dev
+    echo "Informe o nome do server (Ex.: adler) :"
+    read server
 
-    DocumentRoot "$path"
+    echo "Informe o caminho do site (Ex.: /var/www/adler) :"
+    read path
 
-    <Directory "$path">
-        Options Indexes FollowSymLinks MultiViews
-        AllowOverride All
-        Order allow,deny
-        Allow from all
-    </Directory>
-</VirtualHost>
-" > /etc/apache2/sites-available/$server.conf
+    echo "Criando configuração de VHost para o server"
 
-echo "Ativando VHOST $server"
-ln -s /etc/apache2/sites-available/$server.conf /etc/apache2/sites-enabled/$server.conf
-# a2ensite $server
+    echo "
+    <VirtualHost *:80>
+        ServerAdmin webmaster@localhost
+        ServerName $server.dev
+        ServerAlias www.$server.dev
 
-echo "Atualizando arquivo hosts"
-echo "127.0.0.1 $server.dev www.$server.dev" >> /etc/hosts
+        DocumentRoot "$path"
 
-echo "Reiniciando apache";
-service apache2 restart
+        <Directory "$path">
+            Options Indexes FollowSymLinks MultiViews
+            AllowOverride All
+            Order allow,deny
+            Allow from all
+        </Directory>
+    </VirtualHost>
+    " > /etc/apache2/sites-available/$server.conf
 
-echo "VHOST criado";
+    echo "Ativando VHOST $server"
+    #ln -s /etc/apache2/sites-available/$server.conf /etc/apache2/sites-enabled/$server.conf
+    a2ensite $server
+
+    echo "Atualizando arquivo hosts"
+    echo "127.0.0.1 $server.dev www.$server.dev" >> /etc/hosts
+
+    echo "Reiniciando apache";
+    service apache2 restart
+
+    echo "VHOST criado";
+
+fi
